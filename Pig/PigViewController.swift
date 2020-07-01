@@ -1,4 +1,5 @@
 import UIKit
+import AVFoundation
 import ObjectLibrary
 
 final class PigViewController: UIViewController {
@@ -15,10 +16,11 @@ final class PigViewController: UIViewController {
     lazy var model = {
         return PigModel(delegate: self)
     }()
+    var timer: Timer?
+    var rollCount = 0
     
     override func viewDidLoad() {
         super.viewDidLoad()
-        
         beginNewGame()
     }
     
@@ -27,7 +29,7 @@ final class PigViewController: UIViewController {
     }
     
     @IBAction func rollButtonTapped(_ sender: Any) {
-        model.roll()
+        animateDie()
     }
     
     @IBAction func holdButtonTapped(_ sender: Any) {
@@ -37,24 +39,37 @@ final class PigViewController: UIViewController {
     func beginNewGame() {
         model.beginNewGame()
         diceImageView.image = UIImage(named: "pig")
-        pointsRolledLabel.text = "0"
-        playerOnePointsLabel.text = "0"
-        playerTwoPointsLabel.text = "0"
-        rollButton.isEnabled = true
-        holdButton.isEnabled = false
+    }
+    
+    func animateDie() {
+        rollCount = Int.random(in: 10..<20)
+        timer = Timer.scheduledTimer(timeInterval: 0.1, target: self, selector: #selector(rollRandom), userInfo: nil, repeats: true)
+    }
+    
+    @objc func rollRandom() {
+        let randomDie = Die.allCases.randomElement()!
+        update(randomDie)
+        if rollCount == 0 {
+            model.roll()
+            timer?.invalidate()
+            timer = nil
+        }
+        rollCount -= 1
     }
     
 }
 
 extension PigViewController: PigModelDelegate {
     
-    func update(die: Die) {
+    func update(_ die: Die) {
         diceImageView.image = die.face
     }
     
     func update(_ pointsRolled: Int) {
         pointsRolledLabel.text = String(pointsRolled)
-        holdButton.isEnabled = true
+        if pointsRolled > 0 {
+            holdButton.isEnabled = true
+        }
     }
     
     func updateScore(for player: Player) {
@@ -69,6 +84,8 @@ extension PigViewController: PigModelDelegate {
     }
     
     func willChange(player: Player) {
+        pointsRolledLabel.text = "0"
+        rollButton.isEnabled = true
         holdButton.isEnabled = false
     }
     
@@ -76,8 +93,8 @@ extension PigViewController: PigModelDelegate {
         titleLabel.text = text
     }
     
-    func notifyWinner(alerTitle: String, message: String, actionTitle: String) {
-        presentSingleActionAlert(alerTitle: alerTitle, message: message, actionTitle: actionTitle, completion: beginNewGame)
+    func notifyWinner(alertTitle: String, message: String, actionTitle: String) {
+        presentSingleActionAlert(alerTitle: alertTitle, message: message, actionTitle: actionTitle, completion: beginNewGame)
     }
     
 }
