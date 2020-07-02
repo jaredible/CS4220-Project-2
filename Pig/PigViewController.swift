@@ -1,5 +1,4 @@
 import UIKit
-import AVFoundation
 import ObjectLibrary
 
 final class PigViewController: UIViewController {
@@ -42,7 +41,8 @@ final class PigViewController: UIViewController {
     }
     
     func animateDie() {
-        rollCount = Int.random(in: 10..<20)
+        enableButtons(false)
+        rollCount = Int.random(in: 10...20)
         timer = Timer.scheduledTimer(timeInterval: 0.1, target: self, selector: #selector(rollRandom), userInfo: nil, repeats: true)
     }
     
@@ -50,11 +50,18 @@ final class PigViewController: UIViewController {
         let randomDie = Die.allCases.randomElement()!
         update(randomDie)
         if rollCount == 0 {
+            enableButtons(true)
             model.roll()
             timer?.invalidate()
             timer = nil
         }
         rollCount -= 1
+    }
+    
+    func enableButtons(_ enabled: Bool) {
+        resetButton.isEnabled = enabled
+        rollButton.isEnabled = enabled
+        holdButton.isEnabled = enabled
     }
     
 }

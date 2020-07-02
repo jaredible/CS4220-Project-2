@@ -40,7 +40,7 @@ final class PigModel {
         delegate?.update(randomDie)
         let pointsRolled = randomDie.value
         var rollText = "\(currentPlayer.name) rolled a \(pointsRolled)."
-        if pointsRolled == 1 {
+        if randomDie == Die.one {
             rollText += "\n\(nextPlayer().name), you're up!"
             toggleTurn()
         } else {
