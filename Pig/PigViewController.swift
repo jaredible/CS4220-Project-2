@@ -12,7 +12,7 @@ final class PigViewController: UIViewController {
     @IBOutlet private weak var rollButton: RoundButton!
     @IBOutlet private weak var holdButton: RoundButton!
     
-    private lazy var model =  { PigModel(delegate: self) }()
+    private lazy var model = { PigModel(delegate: self) }()
     private var particleEmitter: CAEmitterLayer?
     private let transitions = [
         UIView.AnimationOptions.transitionFlipFromBottom,
