@@ -32,13 +32,9 @@ final class PigModel {
     static let textNotificationTitle = "Winner"
     static let textNotificationMessage = "%@, it took\nyou %d rolls to win!"
     static let textNotificationActionTitle = "New Game"
-        
-    /// Amount of points a player has when their turn begins.
-    private let defaultPointsRolled = 0
+    
     /// Least amount of points needed for the game to be won.
     private let maxPoints = 100
-    /// Amount of rolls a player has when the game begins.
-    private let defaultRollCount = 0
     /// `Die` that ends a player's turn.
     private let turnEndingDie = Die.one
     /// Lower bound of rolls that can be performed.
@@ -65,14 +61,14 @@ final class PigModel {
     init(delegate: PigModelDelegate) {
         self.delegate = delegate
         players = Player.Identifier.allCases.map { Player(id: $0) }
-        playerRollCounts = Array(repeating: defaultRollCount, count: players.count)
-        pointsRolled = defaultPointsRolled
+        playerRollCounts = Array(repeating: 0, count: players.count)
+        pointsRolled = 0
     }
     
     /// Begins a new game.
     func beginNewGame() {
         // Reset the points rolled.
-        pointsRolled = defaultPointsRolled
+        pointsRolled = 0
         
         // Reset all players' score.
         players.forEach {
@@ -81,7 +77,7 @@ final class PigModel {
         }
         
         // Resets all players' roll count.
-        playerRollCounts = Array(repeating: defaultRollCount, count: players.count)
+        playerRollCounts = Array(repeating: 0, count: players.count)
         
         // Set the current player to the first player.
         isPlayerTwosTurn = false
@@ -171,7 +167,7 @@ final class PigModel {
     
     /// Resets points rolled to zero and changes to the next player.
     private func endTurn() {
-        pointsRolled = defaultPointsRolled
+        pointsRolled = 0
         isPlayerTwosTurn.toggle()
     }
     
