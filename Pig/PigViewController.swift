@@ -3,20 +3,23 @@ import ObjectLibrary
 
 final class PigViewController: UIViewController {
     
-    @IBOutlet weak var titleLabel: UILabel!
-    @IBOutlet weak var diceImageView: UIImageView!
-    @IBOutlet weak var pointsRolledLabel: UILabel!
-    @IBOutlet weak var playerOnePointsLabel: UILabel!
-    @IBOutlet weak var playerTwoPointsLabel: UILabel!
-    @IBOutlet weak var resetButton: RoundButton!
-    @IBOutlet weak var rollButton: RoundButton!
-    @IBOutlet weak var holdButton: RoundButton!
+    @IBOutlet private weak var titleLabel: UILabel!
+    @IBOutlet private weak var diceImageView: UIImageView!
+    @IBOutlet private weak var pointsRolledLabel: UILabel!
+    @IBOutlet private weak var playerOnePointsLabel: UILabel!
+    @IBOutlet private weak var playerTwoPointsLabel: UILabel!
+    @IBOutlet private weak var resetButton: RoundButton!
+    @IBOutlet private weak var rollButton: RoundButton!
+    @IBOutlet private weak var holdButton: RoundButton!
     
-    lazy var model = {
-        return PigModel(delegate: self)
-    }()
-    var timer: Timer?
-    var rollCount = 0
+    private lazy var model =  { PigModel(delegate: self) }()
+    private var particleEmitter: CAEmitterLayer?
+    private let transitions = [
+        UIView.AnimationOptions.transitionFlipFromBottom,
+        UIView.AnimationOptions.transitionFlipFromRight,
+        UIView.AnimationOptions.transitionFlipFromTop,
+        UIView.AnimationOptions.transitionFlipFromLeft
+    ]
     
     override func viewDidLoad() {
         super.viewDidLoad()
@@ -28,7 +31,7 @@ final class PigViewController: UIViewController {
     }
     
     @IBAction func rollButtonTapped(_ sender: Any) {
-        animateDie()
+        model.roll()
     }
     
     @IBAction func holdButtonTapped(_ sender: Any) {
@@ -36,26 +39,13 @@ final class PigViewController: UIViewController {
     }
     
     func beginNewGame() {
-        model.beginNewGame()
+        particleEmitter?.removeFromSuperlayer()
         diceImageView.image = UIImage(named: "pig")
-    }
-    
-    func animateDie() {
-        enableButtons(false)
-        rollCount = Int.random(in: 10...20)
-        timer = Timer.scheduledTimer(timeInterval: 0.1, target: self, selector: #selector(rollRandom), userInfo: nil, repeats: true)
-    }
-    
-    @objc func rollRandom() {
-        let randomDie = Die.allCases.randomElement()!
-        update(randomDie)
-        if rollCount == 0 {
-            enableButtons(true)
-            model.roll()
-            timer?.invalidate()
-            timer = nil
-        }
-        rollCount -= 1
+        pointsRolledLabel.text = "0"
+        resetButton.isEnabled = false
+        rollButton.isEnabled = true
+        holdButton.isEnabled = false
+        model.beginNewGame()
     }
     
     func enableButtons(_ enabled: Bool) {
@@ -64,19 +54,69 @@ final class PigViewController: UIViewController {
         holdButton.isEnabled = enabled
     }
     
+    func createParticles() {
+        particleEmitter = CAEmitterLayer()
+        
+        guard let emitter = particleEmitter else { return }
+        
+        emitter.emitterPosition = CGPoint(x: view.frame.width / 2.0, y: -50)
+        emitter.emitterShape = .line
+        emitter.emitterSize = CGSize(width: view.frame.width, height: 1)
+        emitter.renderMode = .additive
+
+        let cell = CAEmitterCell()
+        cell.birthRate = 1
+        cell.lifetime = 20.0
+        cell.velocity = 100
+        cell.velocityRange = 50
+        cell.emissionLongitude = .pi
+        cell.spinRange = 5
+        cell.scale = 0.5
+        cell.scaleRange = 0.25
+        cell.color = UIColor(white: 1, alpha: 0.25).cgColor
+        cell.alphaSpeed = -0.05
+        cell.contents = UIImage(named: "icon")?.cgImage
+        emitter.emitterCells = [cell]
+
+        view.layer.addSublayer(emitter)
+    }
+    
 }
 
 extension PigViewController: PigModelDelegate {
     
-    func update(_ die: Die) {
-        diceImageView.image = die.face
+    func show(_ roll: Roll, _ closure: @escaping () -> ()) {
+        let dice = roll.dieChanges
+        
+        enableButtons(false)
+        
+        func doRoll(_ index: Int) {
+            let dieChange = dice[index]
+            let die = dieChange.die
+            let duration = dieChange.duration
+            
+            diceImageView.image = die.face
+            
+            if index == dice.count - 1 {
+                enableButtons(true)
+                closure()
+                return
+            }
+            
+            diceImageView.image = die.face
+            
+            let randomTransition = transitions[Int.random(in: 0..<4)]
+            
+            UIView.transition(with: diceImageView, duration: duration, options: randomTransition, animations: nil, completion: { _ in
+                doRoll(index + 1)
+            })
+        }
+        
+        doRoll(0)
     }
     
     func update(_ pointsRolled: Int) {
         pointsRolledLabel.text = String(pointsRolled)
-        if pointsRolled > 0 {
-            holdButton.isEnabled = true
-        }
     }
     
     func updateScore(for player: Player) {
@@ -87,7 +127,6 @@ extension PigViewController: PigModelDelegate {
         case Player.Identifier.two:
             playerTwoPointsLabel.text = totalPoints
         }
-        holdButton.isEnabled = false
     }
     
     func willChange(player: Player) {
@@ -101,6 +140,7 @@ extension PigViewController: PigModelDelegate {
     }
     
     func notifyWinner(alertTitle: String, message: String, actionTitle: String) {
+        createParticles()
         presentSingleActionAlert(alerTitle: alertTitle, message: message, actionTitle: actionTitle, completion: beginNewGame)
     }
     
