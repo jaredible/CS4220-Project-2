@@ -26,6 +26,10 @@ final class PigViewController: UIViewController {
         beginNewGame()
     }
     
+    override func viewDidLayoutSubviews() {
+        super.viewDidLayoutSubviews()
+    }
+    
     @IBAction func resetButtonTapped(_ sender: Any) {
         beginNewGame()
     }
@@ -85,27 +89,25 @@ final class PigViewController: UIViewController {
 
 extension PigViewController: PigModelDelegate {
     
-    func show(_ roll: Roll, _ closure: @escaping () -> ()) {
+    func show(_ roll: Roll, _ closure: @escaping (_ die: Die?) -> ()) {
         let dice = roll.dieChanges
         
         enableButtons(false)
         
         func doRoll(_ index: Int) {
             let dieChange = dice[index]
-            let die = dieChange.die
-            let duration = dieChange.duration
             
-            diceImageView.image = die.face
+            diceImageView.image = dieChange.die.face
             
             if index == dice.count - 1 {
                 enableButtons(true)
-                closure()
+                closure(dice.last?.die)
                 return
             }
-                        
+            
             let randomTransition = transitions[Int.random(in: 0..<4)]
             
-            UIView.transition(with: diceImageView, duration: duration, options: randomTransition, animations: nil, completion: { _ in
+            UIView.transition(with: diceImageView, duration: dieChange.duration, options: randomTransition, animations: nil, completion: { _ in
                 doRoll(index + 1)
             })
         }
@@ -128,8 +130,6 @@ extension PigViewController: PigModelDelegate {
     }
     
     func willChange(player: Player) {
-        pointsRolledLabel.text = "0"
-        rollButton.isEnabled = true
         holdButton.isEnabled = false
     }
     

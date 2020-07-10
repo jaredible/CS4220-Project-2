@@ -7,7 +7,7 @@ import struct ObjectLibrary.Roll
 /// Defines behaviors (functions) that `PigModel` can invoke. This allows whoever conforms to this delegate to define its implementation.
 protocol PigModelDelegate: class {
     /// Defines what happens when a die is rolled.
-    func show(_ roll: Roll, _ closure: @escaping () -> ())
+    func show(_ roll: Roll, _ closure: @escaping (_ die: Die?) -> ())
     /// Defines what happens when the total points rolled changes.
     func update(_ pointsRolled: Int)
     /// Defines what happens when a player's score changes.
@@ -36,7 +36,7 @@ final class PigModel {
     /// Amount of points a player has when their turn begins.
     private let defaultPointsRolled = 0
     /// Least amount of points needed for the game to be won.
-    private let maxPoints = 100
+    private let maxPoints = 10
     /// Amount of rolls a player has when the game begins.
     private let defaultRollCount = 0
     /// `Die` that ends a player's turn.
@@ -96,33 +96,32 @@ final class PigModel {
         let randomDice = getRandomDice(count)
         let totalDuration = rollCountDuration * Double(count)
         let roll = Roll(totalDuration: totalDuration, dieChanges: randomDice)
-        let lastDie = roll.dieChanges.last?.die
         
         // Show the die rolls.
-        delegate?.show(roll, {
-            if let randomDie = lastDie {
-                // Get the random die's value.
-                let pointsRolled = randomDie.value
-                
-                // Since a player has rolled, increment their roll count.
-                self.incrementPlayerRollCount()
-                
-                // Describes the game's current state when rolled. Its value will be used if the current player's turn hasn't ended.
-                var message = String(format: PigModel.playerRolledMessage, self.currentPlayer.name, pointsRolled)
-                // Check if the die rolled ends the turn.
-                if self.dieIsTurnEnding(die: randomDie) {
-                    // Since the current player has rolled something that ends their turn, change the default string to reflect the next player's turn.
-                    message += String(format: PigModel.nextPlayerMessage, self.nextPlayer().name)
-                    // End the current player's turn.
-                    self.endTurn()
-                } else {
-                    // Since the current player has rolled something that doesn't end their turn, update the total points rolled.
-                    self.pointsRolled += pointsRolled
-                }
-                
-                // Notify the UI of the game's current state.
-                self.update(message)
+        delegate?.show(roll, { die in
+            guard let lastDie = die else { return }
+            
+            // Get the random die's value.
+            let pointsRolled = lastDie.value
+            
+            // Since a player has rolled, increment their roll count.
+            self.incrementPlayerRollCount()
+            
+            // Describes the game's current state when rolled. Its value will be used if the current player's turn hasn't ended.
+            var message = String(format: PigModel.playerRolledMessage, self.currentPlayer.name, pointsRolled)
+            // Check if the die rolled ends the turn.
+            if self.dieIsTurnEnding(die: lastDie) {
+                // Since the current player has rolled something that ends their turn, change the default string to reflect the next player's turn.
+                message += String(format: PigModel.nextPlayerMessage, self.nextPlayer().name)
+                // End the current player's turn.
+                self.endTurn()
+            } else {
+                // Since the current player has rolled something that doesn't end their turn, update the total points rolled.
+                self.pointsRolled += pointsRolled
             }
+            
+            // Notify the UI of the game's current state.
+            self.update(message)
         })
     }
     
