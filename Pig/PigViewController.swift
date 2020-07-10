@@ -3,6 +3,7 @@ import ObjectLibrary
 
 final class PigViewController: UIViewController {
     
+    /// We definitely need these so that we can reference our UI elements. 😐
     @IBOutlet private weak var titleLabel: UILabel!
     @IBOutlet private weak var diceImageView: UIImageView!
     @IBOutlet private weak var pointsRolledLabel: UILabel!
@@ -12,8 +13,11 @@ final class PigViewController: UIViewController {
     @IBOutlet private weak var rollButton: RoundButton!
     @IBOutlet private weak var holdButton: RoundButton!
     
+    /// Defines the precious game model!
     private lazy var model = { PigModel(delegate: self) }()
+    /// This is here so that we can create and remove it from the view.
     private var particleEmitter: CAEmitterLayer?
+    /// Defines some UI animation transitions used for die rolling.
     private let transitions = [
         UIView.AnimationOptions.transitionFlipFromBottom,
         UIView.AnimationOptions.transitionFlipFromRight,
@@ -23,42 +27,55 @@ final class PigViewController: UIViewController {
     
     override func viewDidLoad() {
         super.viewDidLoad()
+        
+        // Launch a new game upon loading the app. 🚀
         beginNewGame()
     }
     
-    override func viewDidLayoutSubviews() {
-        super.viewDidLayoutSubviews()
-    }
-    
+    /// Called when the reset button is tapped.
     @IBAction func resetButtonTapped(_ sender: Any) {
+        // Begin a new game!
         beginNewGame()
     }
     
+    /// Called when the roll button is tapped.
     @IBAction func rollButtonTapped(_ sender: Any) {
+        // We should probably let the game model know that a roll has occured. 😁
         model.roll()
     }
     
+    /// Called when the hold button is tapped.
     @IBAction func holdButtonTapped(_ sender: Any) {
+        // We should probably let the game model know that a hold has occured. 😮
         model.hold()
     }
     
+    /// Implements what is needed when beginning a new game.
     func beginNewGame() {
+        // Remove the particles if there are any.
         particleEmitter?.removeFromSuperlayer()
+        
+        // Set some default UI stuff.
         diceImageView.image = UIImage(named: "pig")
         pointsRolledLabel.text = "0"
         resetButton.isEnabled = false
         rollButton.isEnabled = true
         holdButton.isEnabled = false
+        
+        // Tell the model that it's game on!
         model.beginNewGame()
     }
     
+    /// Helper function used for the UI buttons.
     func enableButtons(_ enabled: Bool) {
         resetButton.isEnabled = enabled
         rollButton.isEnabled = enabled
         holdButton.isEnabled = enabled
     }
     
+    /// Creates randomly downward-rotating and fading pig-image particles.
     func createParticles() {
+        // I ❤️ emitters.
         particleEmitter = CAEmitterLayer()
         
         guard let emitter = particleEmitter else { return }
@@ -81,7 +98,7 @@ final class PigViewController: UIViewController {
         cell.alphaSpeed = -0.05
         cell.contents = UIImage(named: "icon")?.cgImage
         emitter.emitterCells = [cell]
-
+        
         view.layer.addSublayer(emitter)
     }
     
@@ -90,6 +107,7 @@ final class PigViewController: UIViewController {
 extension PigViewController: PigModelDelegate {
     
     func show(_ roll: Roll, _ closure: @escaping (_ die: Die?) -> ()) {
+        // 10x software engineering right here.
         let dice = roll.dieChanges
         
         enableButtons(false)
@@ -116,10 +134,12 @@ extension PigViewController: PigModelDelegate {
     }
     
     func update(_ pointsRolled: Int) {
+        // We should probably let the current player know their roll score.
         pointsRolledLabel.text = String(pointsRolled)
     }
     
     func updateScore(for player: Player) {
+        // Set the given player's score.
         let totalPoints = String(player.totalPoints)
         switch player.id {
         case Player.Identifier.one:
@@ -130,15 +150,19 @@ extension PigViewController: PigModelDelegate {
     }
     
     func willChange(player: Player) {
+        // Disable the hold button because when a player changes, they don't have an option to tap it.
         holdButton.isEnabled = false
     }
     
     func updateGameLog(text: String) {
+        // Update the title text.
         titleLabel.text = text
     }
     
     func notifyWinner(alertTitle: String, message: String, actionTitle: String) {
+        // Show some particles because it looks cool.
         createParticles()
+        // Show who won the game.
         presentSingleActionAlert(alerTitle: alertTitle, message: message, actionTitle: actionTitle, completion: beginNewGame)
     }
     
