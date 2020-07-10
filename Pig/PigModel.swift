@@ -36,7 +36,7 @@ final class PigModel {
     /// Amount of points a player has when their turn begins.
     private let defaultPointsRolled = 0
     /// Least amount of points needed for the game to be won.
-    private let maxPoints = 10
+    private let maxPoints = 100
     /// Amount of rolls a player has when the game begins.
     private let defaultRollCount = 0
     /// `Die` that ends a player's turn.
