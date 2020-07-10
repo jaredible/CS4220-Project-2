@@ -102,9 +102,7 @@ extension PigViewController: PigModelDelegate {
                 closure()
                 return
             }
-            
-            diceImageView.image = die.face
-            
+                        
             let randomTransition = transitions[Int.random(in: 0..<4)]
             
             UIView.transition(with: diceImageView, duration: duration, options: randomTransition, animations: nil, completion: { _ in
