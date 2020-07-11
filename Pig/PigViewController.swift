@@ -160,6 +160,7 @@ extension PigViewController: PigModelDelegate {
     }
     
     func notifyWinner(alertTitle: String, message: String, actionTitle: String) {
+        enableButtons(false)
         // Show some particles because it looks cool.
         createParticles()
         // Show who won the game.
