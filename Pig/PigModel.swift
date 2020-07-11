@@ -7,7 +7,7 @@ import struct ObjectLibrary.Roll
 /// Defines behaviors (functions) that `PigModel` can invoke. This allows whoever conforms to this delegate to define its implementation.
 protocol PigModelDelegate: class {
     /// Defines what happens when a die is rolled.
-    func show(_ roll: Roll, _ closure: @escaping (_ die: Die?) -> ())
+    func show(_ roll: Roll, _ closure: @escaping (_ die: Die) -> ())
     /// Defines what happens when the total points rolled changes.
     func update(_ pointsRolled: Int)
     /// Defines what happens when a player's score changes.
@@ -95,10 +95,8 @@ final class PigModel {
         
         // Show the die rolls.
         delegate?.show(roll, {
-            guard let die = $0 else { return }
-            
             // Get the random die's value.
-            let pointsRolled = die.value
+            let pointsRolled = $0.value
             
             // Since a player has rolled, increment their roll count.
             self.incrementPlayerRollCount()
@@ -106,7 +104,7 @@ final class PigModel {
             // Describes the game's current state when rolled. Its value will be used if the current player's turn hasn't ended.
             var message = String(format: PigModel.playerRolledMessage, self.currentPlayer.name, pointsRolled)
             // Check if the die rolled ends the turn.
-            if self.dieIsTurnEnding(die: die) {
+            if self.dieIsTurnEnding(die: $0) {
                 // Since the current player has rolled something that ends their turn, change the default string to reflect the next player's turn.
                 message += String(format: PigModel.nextPlayerMessage, self.nextPlayer().name)
                 // End the current player's turn.

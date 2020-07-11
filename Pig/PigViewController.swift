@@ -106,7 +106,7 @@ final class PigViewController: UIViewController {
 
 extension PigViewController: PigModelDelegate {
     
-    func show(_ roll: Roll, _ closure: @escaping (_ die: Die?) -> ()) {
+    func show(_ roll: Roll, _ closure: @escaping (_ die: Die) -> ()) {
         // 10x software engineering right here.
         let dice = roll.dieChanges
         
@@ -114,12 +114,13 @@ extension PigViewController: PigModelDelegate {
         
         func doRoll(_ index: Int) {
             let dieChange = dice[index]
+            let die = dieChange.die
             
-            diceImageView.image = dieChange.die.face
+            diceImageView.image = die.face
             
             if index == dice.count - 1 {
                 enableButtons(true)
-                closure(dice.last?.die)
+                closure(die)
                 return
             }
             
